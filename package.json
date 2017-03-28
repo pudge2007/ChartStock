@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "nodemon ./bin/www"
+    "start": "nodemon app.js"
   },
   "dependencies": {
     "async": "^2.1.5",
@@ -17,6 +17,7 @@
     "mongoose": "^4.8.5",
     "morgan": "~1.7.0",
     "nodemon": "^1.11.0",
+    "request": "^2.81.0",
     "serve-favicon": "~2.3.2",
     "socket.io": "1.7.3"
   }

@@ -8,14 +8,16 @@
     <link href="./components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel='stylesheet' href='./stylesheets/style.css' />
   </head>
-  <body ng-app="stockMarket" class='ng-cloak' ng-controller='MainCtrl'>
+  <body ng-app="stockMarket" class='ng-cloak'>
     
-    <div class='chart'><h1>Hello, World</h1></div>
+    <div ng-view></div>
     
     <script src="/socket.io/socket.io.js"></script>
     <script src="./components/angular/angular.min.js"></script>
     <script src="./components/angular-route/angular-route.min.js"></script>
     <script src="./components/angular-resource/angular-resource.min.js"></script>
+    <script src="./components/highcharts/highstock.js"></script>
+    <script src="./components/highcharts/themes/dark-unica.js"></script>
     <script src="./javascripts/angularApp.js"></script>  
   </body>
 </html>
