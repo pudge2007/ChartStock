@@ -1,7 +1,8 @@
 var mongoose = require('mongoose');
 
 var StockSchema = new mongoose.Schema({
-  stock: String
+  symbol: String,
+  desc: String
 });
 
 module.exports = mongoose.model('Stock', StockSchema);

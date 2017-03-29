@@ -49,6 +49,30 @@ app.factory('highChart', function() {
   });
 })
 
+app.factory('socket',['$rootScope', function($rootScope) {
+    var socket = io.connect();
+    return {
+      on: function (eventName, callback) {
+        socket.on(eventName, function () {  
+          var args = arguments;
+          $rootScope.$apply(function () {
+            callback.apply(socket, args);
+          });
+        });
+      },
+      emit: function (eventName, data, callback) {
+        socket.emit(eventName, data, function () {
+          var args = arguments;
+          $rootScope.$apply(function () {
+            if (callback) {
+              callback.apply(socket, args);
+            }
+          });
+        })
+      }
+    };
+  }]);
+
 app.config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider) {
   $routeProvider
     .when('/', { templateUrl: 'partials/home.ejs', controller: 'MainCtrl'})    
@@ -57,18 +81,30 @@ app.config(['$routeProvider', '$locationProvider', function($routeProvider, $loc
 
 }]);
 
-app.controller('MainCtrl', ['$scope', '$http', 'highChart', function($scope, $http, highChart){
+app.controller('MainCtrl', ['$scope', '$http', 'highChart', 'socket', function($scope, $http, highChart, socket){
   
   $scope.symbol = '';
   $scope.stocks = [];
-  var socket = io.connect();
+  $scope.error = '';
   var chart = highChart;
   
-  $http.get('/stocks').then(function(response){
-    response.data.forEach(function(item) {
-      var info = JSON.parse(item.info);
-      $scope.stocks.push({name: info.Name, symbol: info.Symbol});
-      chart.addSeries({ name: info.Symbol, data: item.plot, type: 'areaspline' });
+  function safelyParseJSON (json) {
+    var parsed;
+    try {
+      parsed = JSON.parse(json);
+    } catch (e) {
+      parsed = json;
+    }
+  
+    return parsed;
+  }
+  
+  socket.on('message', function(data) {
+    $scope.stocks = data;
+    data.forEach(function(stock) {
+      $http.get('/stocks', { params: {symbol: stock.symbol }}).then(function(response) {
+        chart.addSeries({ name: stock.symbol, data: response.data, type: 'areaspline'});
+      })
     })
   })
   
@@ -79,18 +115,33 @@ app.controller('MainCtrl', ['$scope', '$http', 'highChart', function($scope, $ht
     }
   }
   
-  socket.on('getStock', function(data) {
+  socket.on('addStock', function(data) {
     var info = JSON.parse(data.info);
-    $scope.stocks.push({name: info.Name, symbol: info.Symbol});
+    $scope.stocks.push({symbol: info.Symbol, desc: info.Name});
     chart.addSeries({ name: info.Symbol, data: data.plot, type: 'areaspline' });
   })
   
+  socket.on('errMsg', function(data) {
+    $scope.error = data;
+  })
+  
   $scope.deleteStock = function (symbol) {
-    socket.emit('deleteStock', {symbol: symbol}, function(data) {
-      if(data){
-        chart.series[0].remove();
-      }
-    })
+    socket.emit('deleteStock', {symbol: symbol})
   }
+  
+  socket.on('deleteStock', function(data) {
+    for (var i = 0; i < chart.series.length; i++) {
+      if(chart.series[i].name === data) {
+        chart.series[i].remove();
+        break;
+      }
+    } 
+    for (var j = 0; j < $scope.stocks.length; j++) {
+      if ($scope.stocks[j].symbol === data) {
+        $scope.stocks.splice(j, 1);
+        break;
+      }
+    }
+  })
   
 }]);

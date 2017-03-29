@@ -2,6 +2,5 @@ node_modules
 data
 .bowerrc
 Procfile.sh
-bin
 bower.json
 .env
